@@ -28,7 +28,12 @@ ${AD_DOMAIN^^} = {
 
 [domain_realm]
 !
+#
+#  Assume that domains are NOT prefixed with "."
 for DOM in ${DB_DOMAIN_REALMS[@]}; do
-  echo ${DOM} '=' ${AD_DOMAIN^^} >>krb5.conf
+  echo ${DOM,,} '=' ${AD_DOMAIN^^} >>krb5.conf
+  echo "."${DOM,,} '=' ${AD_DOMAIN^^} >>krb5.conf
+  echo ${DOM^^} '=' ${AD_DOMAIN^^} >>krb5.conf
+  echo "."${DOM^^} '=' ${AD_DOMAIN^^} >>krb5.conf
 done
 echo copy krb5.conf to /etc
