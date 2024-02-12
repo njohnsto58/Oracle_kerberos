@@ -57,7 +57,12 @@ There is the option to transfer the certificate to the UNIX box (07-transfer-cer
 Transfer the certificate to the UNIX enviromment. The certificate can be transferred to as many environments as required
 
 ## UNIX Server
-There are a separate set of scripts to run in the UNIX environment. They require the environment file 00_env.sh to have been transferred from the AD machine. Check this file.
+There are a separate set of scripts to run in the UNIX environment. 
+
+The file 00_env_DOS.sh should have been transferred from the AD machine. Its first run should remove the redundant carriage returns, and rename itself to 00_env.sh. You could run this file first, but it shouldn't be necessary. 
+
+CHECK THE FILE FOR CORRECTNESS BEFORE YOU RUN THE SCRIPTS
+
 There is also the file 00_cmu_env.sh - this is NOT generated, you'll need to update this manually
 The database node SHOULD have the Oracle Kerberos utilities installed (okinit, okdstry,...)
 There will need to be a node SOMEWHERE on the network with the Kerberos workstation utilities. I've tried this with the Krb6-workstation installed (yum install krb5-workstation) on an OCI node, and a DCS node with no additional kerberos utilities installed.
