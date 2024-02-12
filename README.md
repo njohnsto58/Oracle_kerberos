@@ -15,6 +15,7 @@ There are 2 parts - Windows Server and UNIX server. I haven't finished the scrip
 
 ## ASSUMPTIONS:
 The executer of the Windows scripts is able to create and update users in AD, and generate the AD certificate.
+
 In addition to AD Domain Services, also requires Certificate Services to generte the certificate
 PSCP has been installed on the Windows AD Server
 The executer of the UNIX scripts is oracle
