@@ -132,7 +132,7 @@ Script generates the command to obtain a Kerberos ticket. Just for convenience r
 Is called from 04_database_user.sh - so if you run this script, you don't need to run it.
 But - it is not called from 04a_database_cmu_user.sh
 
-CMU scripts - they rely on the entries in 00_emu_env.sh
+CMU scripts - they rely on the entries in 00_cmu_env.sh
 
 ### 06_DSI_create.sh
 Generated the dsi.ora file. I can only get this to work if it's in the $ORACLE_HOME/network/admin - I haven't investigated why it doesn't work anywhere else - you can do that if you want.
