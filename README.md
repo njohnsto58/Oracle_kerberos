@@ -21,6 +21,13 @@ PSCP has been installed on the Windows AD Server
 The executer of the UNIX scripts is oracle
 The files sqlnet.ora, dsi.ora are placed in the directory $ORACLE_HOME/network/admin - the scripts enable other directories to be used, but I have not tested this.
 
+The UNIX machines must be able to find the WinAD with its domain - especially if the FQDN on UNIX is different from the FQDN of the AD Controller
+e.g. 
+AD Controller: tsewin-ad.cmgsol.corp
+UNIX database: dbaas1.subnet1.oraclevcn.com
+
+Here I simply added tsewin-ad.cmgsol.corp into the /etc/hosts file
+
 ## Windows AD Server
 1. Update the AD environment file - I think the variables are self explanatory
 The DB_DOMAIN_REALMS parameter will take multiple domains separated by spaces
