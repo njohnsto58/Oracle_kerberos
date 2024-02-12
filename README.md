@@ -45,7 +45,7 @@ The script can be called as many times as you want. For example, if you've made 
 There is the option to transfer the file to the UNIX box (05-transfer-env.bat) - same comment about certificates
 
 ### 05-transfer-env dbaas1
-Ditto for 03-transfer-keytab - if there was a miistake, this can be run again
+Ditto for 03-transfer-keytab - if there was a mistake, this can be run again
 
 ### 06-export-cert dbaas1
 Required for CMU. Assumes that the person running this has permissions to generate the cert
