@@ -11,7 +11,7 @@ set ENV=%1%
 call %ENV%
 rem
 if EXIST "%AD_CERT_DIR%\root.crt" (
-  set /p OVERWRITE= "%AD_CERT%\root.crt already exists - do you want to overwrite it (y/n)?"
+  set /p OVERWRITE= "%AD_CERT_DIR%\root.crt already exists - do you want to overwrite it (y/n)?"
   if "%OVERWRITE%" == "y" (
     del %AD_CERT_DIR%\root.crt
   ) else (
