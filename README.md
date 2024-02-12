@@ -83,7 +83,7 @@ Updates the sqlnet.ora file in $ORACLE_HOME/network/admin. If your sqlnet.ora is
 
 ### 03_oracle_ticket.sh
 Generates the oracle Kerberos ticket.
-IMPORTANT - the Key version number in AD MUST match the key version number in the KeyTab file. The utility kvno will check, but there is no kvno utility on DCS (I've raised an enhancement request - but it might take until the end of the next millenium for someone to look at it), so in this case transfer the file to a machine with krb-workstation.
+IMPORTANT - the Key version number in AD MUST match the key version number in the KeyTab file. The utility kvno will check, but there is no kvno utility on DCS (I've raised an enhancement request 30298291  - but it might take until the end of the next millenium for someone to look at it), so in this case transfer the file to a machine with krb-workstation.
 The utility 03_oracle_ticket.sh SHOULD give clear instructions -
 
 If the utility detects kvno on the current node, it will run and check ...
