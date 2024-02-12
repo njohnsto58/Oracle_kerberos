@@ -21,7 +21,7 @@ The files sqlnet.ora, dsi.ora are placed in the directory $ORACLE_HOME/network/a
 
 ## Windows AD Server
 1. Update the AD environment file - I think the variables are self explanatory
-The DB_DOIMAIN_REALMS parameter will take multiple domains separated by spaces
+The DB_DOMAIN_REALMS parameter will take multiple domains separated by spaces
 2. If you want to transfer the files seamlessly to the UNIX box, then create a public and private key. I've created one for ease, but you should create your own.
 3. Create an environment file FOR EACH database that you need to authenticate to - use DBAAS1.bat DBAAS2.bat as examples
 4. Run the scripts in numerical order...
