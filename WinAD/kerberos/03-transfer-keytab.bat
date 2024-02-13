@@ -15,3 +15,7 @@ rem - transfer file to database node (as oracle user)
 rem - assume a certificate has been created to enable transfer - otherwise amend to add password
 @echo on
 pscp -i %SCP_KEY% %KEYTAB_FILE% oracle@%REMOTE_NODE%.%REMOTE_DOMAIN%:%KEYTAB_DIR%/%KEYTAB_FILE%
+rem
+rem copy keytab file to UNIXclient and WINclient directories
+copy %KEYTAB_FILE% UNIXClient
+copy %KEYTAB_FILE% WINClient
