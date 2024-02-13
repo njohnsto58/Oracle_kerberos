@@ -1,6 +1,6 @@
 @echo off
 rem
-rem Generate a PowerShell cmdlet to create a user in AD - then run the cmdlet
+rem Generate a PowerShell cmdlet to create a service account in AD - then run the cmdlet
 rem - command MUST be run as administrator
 rem
 rem there is NO error checking, if it fails, then fix the errors manually and re-run
