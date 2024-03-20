@@ -1,7 +1,7 @@
 # Oracle_kerberos
 Kerberos setup scripts
 Here are a suite of scripts to enable the setting up of Kerberos authentication from AD to an Oracle database running on UNIX.
-I have tested them on AD-2016 and a database running on a UNIX OCI compute node, and on a Database Cloud Service running on OCI, and on a Windows 10 client.
+I have tested them on AD-2019 and a database running on a UNIX OCI compute node, and on a Database Cloud Service running on OCI, and on a Windows 10 client.
 I have NOT tested these on an Autonomous Database (might be the next step)
 
 The scripts have been extended to cover generating the AD certificate (for CMU), but NOT the delegation rights required for setting the user lockoutTime (see Matalink note 2462012.1). I Don't know how to do this.
@@ -11,13 +11,16 @@ frank_id_rsk.ppk - the private key that can be used in Windows using pscp;
 frank_id_rsa - the private key that can be used on UNIX
 frank_id_rsa.pub - the public key that can be placed into the UNIX file .ssh/authorized_keys
 
-There are 2 parts - Windows Server and UNIX server. I haven't finished the scripts to set up the Windows client. They may come later.
+There are 2 parts - Windows Server and UNIX server. I haven't finished the scripts to set up the Windows client. They may come later, but the files are generated and placed in an appropriate directory to transfer.
+
+The process involves generating a number of files on the AD server for EACH UNIX database, then transferring those files to the UNIX host to run and set up that environment. The files when generated 
 
 ## ASSUMPTIONS:
 The executer of the Windows scripts is able to create and update users in AD, and generate the AD certificate.
 
 In addition to AD Domain Services, also requires Certificate Services to generte the certificate
-PSCP has been installed on the Windows AD Server - I use https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
+To transfer the files from the Windows AD Server to the UNIX database host, you'll need a mechanism to copy the files.
+I use PSCP from https://www.chiark.greenend.org.uk/~sgtatham/putty/latest.html
 The executer of the UNIX scripts is oracle
 The files sqlnet.ora, dsi.ora are placed in the directory $ORACLE_HOME/network/admin - the scripts enable other directories to be used, but I have not tested this.
 
@@ -31,22 +34,24 @@ Here I simply added tsewin-ad.cmgsol.corp into the /etc/hosts file
 ## Windows AD Server
 1. Update the AD environment file - I think the variables are self explanatory
 The DB_DOMAIN_REALMS parameter will take multiple domains separated by spaces
-2. If you want to transfer the files seamlessly to the UNIX box, then create a public and private key. I've created one for ease, but you should create your own.
-3. Create an environment file FOR EACH database that you need to authenticate to - use DBAAS1.bat DBAAS2.bat as examples
+2. Create an environment file **FOR EACH** database that you need to authenticate to - use **DBAAS1.bat** and **DBAAS2.bat** as examples
+3. If you want to transfer the files seamlessly to the UNIX box, then create a public and private key. I've created one for ease, but you should create your own.
 4. Run the scripts in numerical order...
 
-### 01-newuser dbaas1
+### 01-DBServiceAccount <<DB Host Environment File>>
 Must be run as an administrator - there's a little check at the beginning of the script.
 This will create a service account for the oracle database that you'll be authenticating to in AD. I'm not sure that the account name will need to be as long as the name generated - but this works for now
 
-### 02-ktp dbaas1
+### 02-ktp <<DB Host Environment File>>
 This will generate the key tab file - again, must be run as an administrator
-There is an option to transfer the file to the UNIX box (03-transfer-keytab.bat) - as long as you have the keys and remote keytab directory set up (I have tested this with $ORACLE_HOME) - this should work.
+The generated file will be placed in a directory **<<DB Host Environment File>>-Host**
 
-### 03-transfer-keytab dbaas1
-If you want to transfer the keytab again - or it didn't work in the previous step (and you've fixed the error)
+### 03-remote-envUNIX-DB <<DB Host Environment File>>
+This should generate an environment file that gets called on the UNIX box. In our example, the file will be called 00_env_dbaas1.sh
+The script can be called as many times as you want. For example, if you've made changes to the to the environment file (e.g. DBAAS1.bat) and want to regenerate the remote env file.
+The generated script will be placed in the directory **<<DB Host Environment File>>-Host**
 
-### 04-remote-env dbaas1
+### 04-remote-envWin dbaas1
 This should generate an environment file that gets called on the UNIX box. In our example, the file will be called 00_env_dbaas1.sh
 The script can be called as many times as you want. For example, if you've made changes to the to the environment file (e.g. DBAAS1.bat) and want to regenerate the remote env file.
 There is the option to transfer the file to the UNIX box (05-transfer-env.bat) - same comment about certificates
