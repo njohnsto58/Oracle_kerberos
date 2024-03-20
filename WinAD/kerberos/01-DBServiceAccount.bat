@@ -40,3 +40,6 @@ echo cmd /c pause >>01-newuser_%ENV%.ps1
 rem
 rem - execute PowerShell as administrator
 PowerShell -NoProfile -ExecutionPolicy Bypass -Command "& {Start-Process PowerShell -ArgumentList '-NoProfile -ExecutionPolicy Bypass -File "".\01-newuser_%ENV%.ps1""' -Verb RunAs}"
+rem
+rem create the directory for UNIX transfer
+mkdir %REMOTE_NODE%-Host

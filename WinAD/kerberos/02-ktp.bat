@@ -34,12 +34,12 @@ ktpass -princ %ORACLE_SERVICE%/%REMOTE_NODE%.%REMOTE_DOMAIN%@%AD_DOMAIN% -mapuse
 rem
 rem - check SPN
 setspn -L %REMOTE_NODE%
+rem set /p TRANSFER= "Do you want to transfer to database node now (y/n)?"
+rem if "%TRANSFER%" == "y" (
+rem   call 03-transfer-keytab %ENV%
+rem ) else (
+rem   echo
+rem   echo Transfer keytab database node: 03-transfer-keytab %ENV%
+rem )
 rem
-echo
-set /p TRANSFER= "Do you want to transfer to database node now (y/n)?"
-if "%TRANSFER%" == "y" (
-  call 03-transfer-keytab %ENV%
-) else (
-  echo
-  echo Transfer keytab database node: 03-transfer-keytab %ENV%
-)
+move %KEYTAB_FILE% %REMOTE_NODE%-host
