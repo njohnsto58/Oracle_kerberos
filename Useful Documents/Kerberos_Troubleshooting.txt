@@ -1,0 +1,245 @@
+Kerberos SRDC - MOS note 2364906.1
+
+sudo yum install krb5-libs krb5-workstation
+
+
+To list the contents of a keytab:
+oklist -k -e -t $ORACLE_HOME/network/admin/database.keytab 
+or
+export KRB5_CONFIG=$ORACLE_HOME/network/admin/krb5.conf
+klist -ke -t $ORACLE_HOME/network/admin/database.keytabe
+
+      etype           encryption type                 Reference
+         0       reserved                     [RFC6448]
+         1       des-cbc-crc                  [RFC3961]
+         2       des-cbc-md4                  [RFC3961]
+         3       des-cbc-md5                  [RFC3961]
+         4       Reserved                     [RFC3961]
+         5       des3-cbc-md5
+         6       Reserved                     [RFC3961]
+         7       des3-cbc-sha1
+         8       Unassigned
+         9       dsaWithSHA1-CmsOID           [RFC4556]
+        10       md5WithRSAEncryption-CmsOID  [RFC4556]
+        11       sha1WithRSAEncryption-CmsOID [RFC4556]
+        12       rc2CBC-EnvOID                [RFC4556]
+        13       rsaEncryption-EnvOID         [RFC4556][from PKCS#1 v1.5]]
+        14       rsaES-OAEP-ENV-OID           [RFC4556][from PKCS#1 v2.0]]
+        15       des-ede3-cbc-Env-OID         [RFC4556]
+        16       des3-cbc-sha1-kd             [RFC3961]
+        17       aes128-cts-hmac-sha1-96      [RFC3962]
+        18       aes256-cts-hmac-sha1-96      [RFC3962]
+        23       rc4-hmac                     [RFC4757]
+        24       rc4-hmac-exp                 [RFC4757]
+        65       subkey-keymaterial           [(opaque; PacketCable)]
+
+
+To test the krb5.conf file:
+$ORACLE_HOME/jdk/jre/bin/kinit ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>
+Password for ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>@<ACTIVE DIRECTORY DEFAULT DOMAIN>: <ACTIVE DIRECTORY USERS PASSWORD>
+New ticket is stored in cache file /tmp/krb5cc_1004
+
+
+To test the keytab flie:
+$ORACLE_HOME/jdk/jre/bin/kinit -k -t $ORACLE_HOME/network/krb5/database.keytab ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>
+
+If you find your kerberos configuration causes ORA-609 in the alert log whenever anyone tries to connect through the listener while using kerberos as an authentication service.  
+1) Comment out sqnet.authentication_servcies in server sqlnet.ora and connect (to validate Kerberos is the issue).  
+2) test with:
+kinit ORACLE/iamlinux.oracle.vm
+kvno ORACLE/iamlinux.oracle.vm
+
+to test KVNO from Powershell:
+import-module ActiveDirectory
+get-aduser <username> -property msDS-KeyVersionNumber
+or
+dsquery * -filter sAMAccountName=<username> -attr msDS-KeyVersionNumber
+
+this will print the KVNO that the kerberos server is looking for. If you recreate the keytab create it with -kvno of one more than this value
+
+Note: You'll often get better diagnostic information with sqlnet.authentication_services=kerberos5pre and OSMSFT://
+
+=============================
+On linux clients, you can set KRB5_TRACE to a path/file (eg: $ORACLE_HOME/network/trace/kerbtrace.txt) and see detailed information about kerberos operations. For example:
+On windows: use:
+$env:KRB5_TRACE =  'C:\app\oracle\product\19.0.0\client_1\network\trace' 
+to set the environment variable
+
+[9563] 1591798367.838404: Getting credentials rlowenth@DBSECLABS.COM -> ORACLE/russdbseclab.dbseclabs.com@ using ccache FILE:/tmp/krb5cc_1001
+[9563] 1591798367.838405: Retrieving rlowenth@DBSECLABS.COM -> ORACLE/russdbseclab.dbseclabs.com@ from FILE:/tmp/krb5cc_1001 with result: 0/Success
+[9563] 1591798367.838406: Creating authenticator for rlowenth@DBSECLABS.COM -> ORACLE/russdbseclab.dbseclabs.com@, seqnum 0, subkey (null), session key rc4-hmac/30A9
+[9563] 1591798367.838408: Getting credentials rlowenth@DBSECLABS.COM -> ORACLE/russdbseclab.dbseclabs.com@ using ccache FILE:/tmp/krb5cc_1001
+[9563] 1591798367.838409: Retrieving rlowenth@DBSECLABS.COM -> ORACLE/russdbseclab.dbseclabs.com@ from FILE:/tmp/krb5cc_1001 with result: 0/Success
+[9563] 1591798367.838410: Read AP-REP, time 1591798368.838407, subkey (null), seqnum 0
+[9563] 1591798367.838411: Retrieving rlowenth@DBSECLABS.COM -> krbtgt/DBSECLABS.COM@DBSECLABS.COM from FILE:/tmp/krb5cc_1001 with result: 0/Success
+[9563] 1591798367.838412: Get cred via TGT krbtgt/DBSECLABS.COM@DBSECLABS.COM after requesting krbtgt/DBSECLABS.COM@DBSECLABS.COM (canonicalize off)
+[9563] 1591798367.838413: Generated subkey for TGS request: aes256-cts/82EC
+[9563] 1591798367.838414: etypes requested in TGS request: rc4-hmac
+[9563] 1591798367.838416: Encoding request body and padata into FAST request
+[9563] 1591798367.838417: Sending request (1729 bytes) to DBSECLABS.COM
+[9563] 1591798367.838418: Resolving hostname 10.0.1.149
+[9563] 1591798367.838419: Initiating TCP connection to stream 10.0.1.149:88
+[9563] 1591798367.838420: Sending TCP request to stream 10.0.1.149:88
+[9563] 1591798367.838421: Received answer (1651 bytes) from stream 10.0.1.149:88
+[9563] 1591798367.838422: Terminating TCP connection to stream 10.0.1.149:88
+[9563] 1591798367.838423: Sending DNS URI query for _kerberos.DBSECLABS.COM.
+[9563] 1591798367.838424: No URI records found
+[9563] 1591798367.838425: Sending DNS SRV query for _kerberos-master._udp.DBSECLABS.COM.
+[9563] 1591798367.838426: Sending DNS SRV query for _kerberos-master._tcp.DBSECLABS.COM.
+[9563] 1591798367.838427: No SRV records found
+[9563] 1591798367.838428: Response was not from master KDC
+[9563] 1591798367.838429: Decoding FAST response
+[9563] 1591798367.838430: FAST reply key: aes256-cts/56D2
+[9563] 1591798367.838431: TGS reply is for rlowenth@DBSECLABS.COM -> krbtgt/DBSECLABS.COM@DBSECLABS.COM with session key rc4-hmac/9555
+[9563] 1591798367.838432: Got cred; 0/Success
+
+===========================================================================
+Disable UDP:
+udp_preference_limit = 0
+
+===========================================================================
+If the Kerberos ticket size is too large we won't be able to handle it. This usually happens when a Windows user is assigned to too many groups (more than 200)
+Symptom: The client will crash (MSLSA:) or will report 12638 (MIT) with ZTK 6 error in the client trace
+
+ztk_client_set_name: Enter
+ztk_client_set_name: Normal Exit
+ztk_client_set_host: Enter
+ztk_client_set_name: Normal Exit
+ztk_client_send_auth_aso1: Enter
+Failed with error: ZTKERROR_KRB_SEND_AUTH_FAILED
+Error code krb5_sendauth_aso1: -1765328228
+ztk_client_send_auth_aso1: Exit
+
+
+Test: use a file-based cache, get a ticket, and check the size of the CC file. if it's more than 4K there is probably an issue (4044 known to cause failure)
+
+EncodedTicket      : (size: 3652)  <= works
+EncodedTicket      : (size: 3852)  <= fails/crash (350 groups)
+
+===========================================================================
+Bug: 21962287
+sqlnet.fallback_authentication = TRUE
+
+Check for nauztk5ainit: Error code for Client Initialization  "4"
+[20-APR-2017 18:27:00:530] nauztk5ainit: ZTK Context after initialization
+"0x1e53480"
+[20-APR-2017 18:27:00:530] nauztk5ainit: ztk_client_init_context() failed.
+[20-APR-2017 18:27:00:530] nauztk5ainit: Internal Kerberos error for client
+init "No credentials cache found"
+
+===========================================================================
+hidden parameter kerberos5_nocase_sensitive.
+
+
+===========================================================================
+Keytabs need to be created by an AD aministrator. If not, AES256 will fail. RC4 seems to succeed, but stronger encryption fails
+with an obscure error in the client trace:
+======================================================================
+Windows event log (kerberos)
+Kerberos "successes" are sent to the security log with the following IDs. UNLESS someone has changed the default audit policies
+There are a few different subcategories for security logging.  
+To see the configured audit values run:
+	auditpol /get /Category:"Account Logon"
+No registry key changes are required for the security log, only for the system log. If LogLevel is set to anything non-zero, then all Kerberos errors will be logged in the System event log. 
+set-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters" -Name "LogLevel" -Value 1
+get-ItemProperty -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters" -Name "LogLevel"
+
+
+get-eventlog -verbose -logname security -newest 50 -instanceID 4713,4768,4769,4770,4771,4772,4773,4820,4821,4824 | select-object -property *
+Windows security log Kerberos event IDs:
+4713	Kerberos policy was changed
+4768	A Kerberos authentication ticket (TGT) was requested
+4769	A Kerberos service ticket was requested
+4770	A Kerberos service ticket was renewed
+4771	Kerberos pre-authentication failed
+4772	A Kerberos authentication ticket request failed
+4773	A Kerberos service ticket request failed
+4820	A Kerberos Ticket-granting-ticket (TGT) was denied because the device does not meet the access control restrictions
+4821	A Kerberos service ticket was denied because the user, device, or both does not meet the access control restrictions
+4824	Kerberos preauthentication by using DES or RC4 failed because the account was a member of the Protected User group
+
+4773	A Kerberos service ticket request failed
+
+===============
+Check the AD service account for the database server
+
+get service prinicpal from keytab with oklist -k -t
+example:
+ oklist -k -t
+
+Kerberos Utilities for Linux: Version 19.0.0.0.0 - Production on 06-JAN-2021 05:23:50
+
+Copyright (c) 1996, 2019 Oracle.  All rights reserved.
+
+Configuration file : /u01/app/oracle/product/19.0.0/dbhome_1/network/admin/krb5.conf.
+Keytab name: FILE:/u01/app/oracle/product/19.0.0/dbhome_1/network/admin/database.keytab
+KVNO Timestamp         Principal
+---- ----------------- --------------------------------------------------------
+   4 12/31/69 16:00:00 ORACLE/russdbseclab.dbseclabs.com@DBSECLABS.COM
+
+now validate the AD user with (in this case, 10.0.1.149 is my AD server, dc=dbseclabs,dc=com is my AD domain, rlowenth@dbseclabs.com is my AD user, Oracle123 is my password).  Second option is more secure and uses -q and prompts for password:
+ldapsearch  -h 10.0.1.149 -p 389 -D rlowenth@dbseclabs.com -w Oracle123 -s sub -b dc=dbseclabs,dc=com servicePrincipalName=ORACLE/russdbseclab.dbseclabs.com
+ldapsearch  -h 10.0.1.149 -p 389 -D rlowenth@dbseclabs.com -q -s sub -b dc=dbseclabs,dc=com servicePrincipalName=ORACLE/russdbseclab.dbseclabs.com
+
+To search by just the login user name:
+ldapsearch  -h 10.0.1.149 -p 389 -D rlowenth@dbseclabs.com -w Oracle123 -s sub -b dc=dbseclabs,dc=com samAccountName=dbseclabs
+
+Active Directory userAccountControl flags
+SCRIPT				1
+ACCOUNTDISABLE			2
+HOMEDIR_REQUIRED		8
+LOCKOUT				16
+PASSWD_NOTREQD			32
+PASSWD_CANT_CHANGE		64
+ENCRYPTED_TEXT_PWD_ALLOWED	128
+TEMP_DUPLICATE_ACCOUNT		256
+NORMAL_ACCOUNT			512
+INTERDOMAIN_TRUST_ACCOUNT	2048
+WORKSTATION_TRUST_ACCOUNT	4096
+SERVER_TRUST_ACCOUNT		8192
+DONT_EXPIRE_PASSWORD		65536
+MNS_LOGON_ACCOUNT		131072
+SMARTCARD_REQUIRED		262144
+TRUSTED_FOR_DELEGATION		524288
+NOT_DELEGATED			1048576
+USE_DES_KEY_ONLY		2097152
+DONT_REQ_PREAUTH		4194304
+PASSWORD_EXPIRED		8388608
+TRUSTED_TO_AUTH_FOR_DELEGATION	16777216
+
+if userAccountControl=66048 that is:
+DONT_EXPIRE_PASSWORD + NORMAL_ACCOUNT	
+
+==========Kerberos environment variables========
+KRB5_CONFIG - Main Kerberos configuration file. Multiple filenames can be specified, separated by a colon; all files which are present will be read. (See MIT Kerberos defaults for the default path.)
+KRB5_KDC_PROFILE - KDC configuration file. (See MIT Kerberos defaults for the default name.)
+KRB5_KTNAME - Default keytab file name. (See MIT Kerberos defaults for the default name.)
+KRB5_CLIENT_KTNAME - Default client keytab file name. (See MIT Kerberos defaults for the default name.)
+KRB5CCNAME - Default name for the credentials cache file, in the form type:residual. The type of the default cache may determine the availability of a cache collection. For instance, a default cache of type DIR causes caches within the directory to be present in the global cache collection.
+KRB5RCACHETYPE - Default replay cache type. Defaults to dfl. A value of none disables the replay cache.
+KRB5RCACHEDIR - Default replay cache directory. (See MIT Kerberos defaults for the default location.)
+KPROP_PORT - kprop port to use. Defaults to 754.
+KRB5_TRACE - Filename for trace-logging output (introduced in release 1.9). For example, env KRB5_TRACE=/dev/stdout kinit would send tracing information for kinit to /dev/stdout. Some programs may ignore this variable (particularly setuid or login system programs).
+
+
+=========== krb5.conf search order  ============
+1 Value in sqlnet.ora
+2 $ORACLE_HOME/network/admin/krb5.conf
+3 /etc/krb5.conf
+4 /krb5/krb5.conf
+
+===========Manipulate the keytab=============
+Note- when I have time play with this. Is there a way to create the keytab from the database server just knowing the AD user and password?
+ktutil  (enter the utility)
+add_entry
+delete_entry
+list
+
+=============Constrained delegation fix =================
+on the client machine:
+1. GOTO HKEY_LOCAL_MACHINE\SYSTEM\CurrentControlSet\Control\Lsa\Kerberos\Parameters
+2. Create the following Parameter
+   Entry: AllowTgtSessionKey
+   Type: REG_DWORD
+   Value:1
+3. Reboot the client system.

@@ -1,0 +1,330 @@
+Goal: Enable Kerberos Authentication for Oracle Database 19c with a 19c client.
+
+<DATABASE_SERVER_HOST_NAME> eg: sunsrv1 - you can find this with hostname
+<DATABASE_SERVER_HOST_DOMAIN> eg: us.oracle.com - you can find this with "dnsdomainname"
+	Alternatively, find the fully qualified hosname with "hostname --fqdn"
+<DATABASE ORACLE_HOME> eg: /oracle/product/11.1/db_1
+<CLIENT ORACLE_HOME> eg: C:\oracle\product\11.1.0\client_1
+<ACTIVE DIRECTORY DEFAULT DOMAIN> eg: US.ORACLE.COM  note that this should be all upper case
+<ACTIVE DIRECTORY SERVER HOST NAME> eg: dc01
+<ACTIVE DIRECTORY USERS PASSWORD>
+
+For Autonomous Database:  Keytab is generated using 
+kservice - the PDB GUID
+khost - from PUBLIC_DOMAIN entry in cloud_identity
+krealm - The AD default domain, all upper case
+To get the first two values:
+select guid, cloud_identity from v$pdbs;
+
+Task 1: Verify the Oracle Database installation was configured with ASO and the Kerberos Authentication adapter:
+
+For databases on UNIX/Linux:
+$ORACLE_HOME/bin/adapters $ORACLE_HOME/bin/sqlplus
+
+Oracle Net Protocol Adapters linked with sqlplus are:
+
+Oracle Net Naming Adapters linked with sqlplus are:
+
+Oracle Advanced Security products linked with sqlplus are:
+
+      Kerberos v5 Authentication Adapter
+      RADIUS Authentication Adapter
+
+If you do not see the kerberos adapter, the relinking procedures for Kerberos are at the bottom of this document.
+
+For databases on Windows: validate that the kerberos .dll file is present
+
+
+Task 2: Ensure the database server uses a fully qualified host name
+  hostname --fqdn
+	Ping the server locally (from a session on the server)
+		ping $(hostname)
+  Both should return the fully qualified hostname
+		dbserver.company.com
+	If they return just the servername
+		dbserver
+	Then you need to fix the local configuration
+	If the returned hostname is not fully qualfied check /etc/hosts
+		10.10.10.123  dbserver dbserver.company.com  (is INcorrect)
+		10.10.10.123  dbserver  (is INcorect)
+		10.10.10.123  dbserver.company.com dbserver (is CORRECT)
+		
+Task 3: Create an AD user to represent the database server. You may want to use the same name as the database host server but that is not a requirement (<DATABASE_SERVER_HOST_NAME> in the example below). 
+Ensure that you select Setup options: "Do not require Kerberos PreAuthentication" 
+  (note - these options are at the bottom of the ACCOUNT OPTIONS box on the ACCOUNT tab in Active Directory Users & Computers) 
+  You can tell that these options were checked by looking a the user's "userAccountControl" attribute - a value of 4260352 indicates that for this user
+  	- Normal Account
+  	- Password does not expire
+  	- Do not require Kerbers PreAuthentication
+  were selected	(see bottom of this document for more information on userAccountControl flags)
+
+Note: To support 10g databases you would have to allow DES encryption - this would change the useraccountcontrol to 6357504 indicating that that for this user we've selected
+  	- Normal Account
+  	- Password does not expire
+  	- Use DES Encryption
+  	- Do not require Kerbers PreAuthentication
+
+Task 4: Create a keytab file on the AD machine:
+NOTE: Do not use the ktpass from Support Tools for Windows2003 SP1 (http://support.microsoft.com/kb/919557/en-us). Using the wrong version of ktpass will cause "Pre-Authentication Information Was Invalid (24)" errors
+- If AD2000
+ktpass -princ ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>@<ACTIVE DIRECTORY DEFAULT DOMAIN> -pass <ACTIVE DIRECTORY USERS PASSWORD> -mapuser <DATABASE_SERVER_HOST_NAME> -out database.keytab
+- If AD2003
+ktpass -princ ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>@<ACTIVE DIRECTORY DEFAULT DOMAIN> -pass <ACTIVE DIRECTORY USERS PASSWORD> -mapuser <DATABASE_SERVER_HOST_NAME> -crypto DES-CBC-CRC -out database.keytab
+- If AD2008 - 2016
+ktpass -princ ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>@<ACTIVE DIRECTORY DEFAULT DOMAIN> -pass <ACTIVE DIRECTORY USERS PASSWORD> -mapuser <DATABASE_SERVER_HOST_NAME> -crypto ALL -ptype KRB5_NT_PRINCIPAL -out database.keytab
+
+ktpass -princ ORACLE/russdbseclab.dbseclabs.com@DBSECLABS.COM -pass Oracle123 -mapuser dbseclabkrb -crypto ALL -ptype KRB5_NT_PRINCIPAL -out database.keytab
+
+TRY THIS:
+ktutil
+  ktutil:  addent -password -p username@ADS.IU.EDU -k 1 -e aes256-cts
+  Password for username@ADS.IU.EDU: [enter your password]
+  ktutil:  wkt username.keytab
+  ktutil:  quit
+Following is an example using Heimdal Kerberos:
+
+  > ktutil -k username.keytab add -p username@ADS.IU.EDU -e arcfour-hmac-md5 -V 1
+
+NOTE: To list the contents of a keytab:
+
+oklist -k $ORACLE_HOME/network/admin/database.keytab 
+or
+$ORACLE_HOME/jdk/jre/bin/ktab -l -k FILE:$ORACLE_HOME/network/admin/database.keytab
+or 
+klist -ke -t $ORACLE_HOME/network/admin/database.keytab
+
+NOTE: To view the userobject in Active Directory:
+get-aduser kerbtest1 -properties name,samAccountName,servicePrincipalName
+
+
+Task 5: If the database is on Unix, ensure there is a directory called /tmp 
+        If the database is on Windows, ensure there is a directory called \tmp on the same drive as %ORACLE_HOME%
+
+(only for 11gR2 and newer databases - see note 1105684.1) Validate /etc/services (*nix) or %SYSTEMROOT%\system32\drivers\etc\services and ensure that port 88 is registered for kerberos5.  In other words, this is how the services file looks before the change : 
+
+cat /etc/services |grep kerberos
+ kerberos      88/tcp          krb5                # Kerberos v5
+ kerberos      88/udp          krb5                # Kerberos v5
+
+and this is how it has to look like after the change: 
+
+cat /etc/services |grep kerberos
+
+kerberos      88/tcp      kerberos5 krb5           # Kerberos v5
+kerberos      88/udp      kerberos5 krb5           # Kerberos v5
+
+Task 6: Copy the keytab file to $ORACLE_HOME/network/admin. If on Windows, create %homedrive%\tmp if it doesn't already exist.
+
+Task 7: Create the krb5.conf file and place it in $ORACLE_HOME/network/admin
+[libdefaults]
+    default_realm = <ACTIVE DIRECTORY DEFAULT DOMAIN>
+    clockskew = 6000
+    passwd_check_s_address = false
+    noaddresses = true
+    forwardable = yes
+[realms]
+    <ACTIVE DIRECTORY DEFAULT DOMAIN> = {
+        kdc = <ACTIVE DIRECTORY SERVER HOST NAME>.<ACTIVE DIRECTORY DEFAULT DOMAIN>:88
+    }
+[domain_realm]
+    <DATABASE_SERVER_HOST_DOMAIN> = <ACTIVE DIRECTORY DEFAULT DOMAIN>
+    .<DATABASE_SERVER_HOST_DOMAIN> = <ACTIVE DIRECTORY DEFAULT DOMAIN>
+    
+OPTIONAL: As the user root, create a soft link for krb5.conf in /etc to the file in $ORACLE_HOME/network/admin
+mv krb5.conf krb5.conf.orig
+ln -s <DATABASE ORACLE_HOME>/network/krb5/krb5.conf krb5.conf
+
+Note: You may choose to simply place the krb5.conf file in the /etc (or your operating system's default) directory
+Note: if you can't update files in /etc set the environment variable KRB5_CONFIG to point to your krb5.conf file.  eg:
+export KRB5_CONFIG=$ORACLE_HOME/network/admin/krb5.conf
+
+Task 8: Create or edit the sqlnet.ora file in $ORACLE_HOME/network/admin. 
+It should have the following entries ($ORACLE_HOME needs to be replaced with the actual path, not the environment variable):
+#Basic Parameters
+SQLNET.AUTHENTICATION_SERVICES=(beq,kerberos5pre,kerberos5)
+#Kerberos Parameters
+SQLNET.AUTHENTICATION_KERBEROS5_SERVICE=ORACLE
+SQLNET.KERBEROS5_CONF=<DATABASE ORACLE_HOME>/network/admin/krb5.conf
+SQLNET.KERBEROS5_CLOCKSKEW=6000
+SQLNET.KERBEROS5_CONF_MIT=TRUE
+#Following parameter is server-side only
+SQLNET.KERBEROS5_KEYTAB=<DATABASE ORACLE_HOME>/network/admin/database.keytab
+#Trace Parameters
+#TRACE_LEVEL_SERVER=15
+DIAG_ADR_ENABLED=off
+TRACE_DIRECTORY_SERVER=<DATABASE ORACLE_HOME>/network/trace
+TRACE_FILE_SERVER=server
+
+
+Task 9: Test the krb5.conf file:
+$ORACLE_HOME/jdk/jre/bin/kinit ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>
+Password for ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>@<ACTIVE DIRECTORY DEFAULT DOMAIN>: <ACTIVE DIRECTORY USERS PASSWORD>
+New ticket is stored in cache file /tmp/krb5cc_1004
+
+If you are working with a Windows 2008 server and get an error that says the client was not found in the kerberos database you may be hitting this issue:
+http://support.microsoft.com/kb/951191
+The problem doesn't seem to be always occur, but when it does the only solution is to apply the recommended hotfix.
+
+Task 10: Test the keytab flie:
+$ORACLE_HOME/jdk/jre/bin/kinit -k -t $ORACLE_HOME/network/krb5/database.keytab ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>
+
+<Note: the keytab if valid if you are able to obtain a ticket without having to present a password>
+
+Task 10.1 Test the keytab file's KVNO
+
+oklist -k $ORACLE_HOME/network/admin/database.keytab
+
+kvno ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>
+output will be something lik
+Note: if you didn't update /etc/krb5.conf set the environment variable KRB5_CONFIG to point to your krb5.conf file.  eg:
+export KRB5_CONFIG=$ORACLE_HOME/network/admin/krb5.conf
+
+If you need to recreate the keytab with a specific kvno number (instead of ???? use one up from what the kvno command gave you)
+
+ktpass -princ ORACLE/<DATABASE_SERVER_HOST_NAME>.<DATABASE_SERVER_HOST_DOMAIN>@<ACTIVE DIRECTORY DEFAULT DOMAIN> -pass <ACTIVE DIRECTORY USERS PASSWORD> -mapuser <DATABASE_SERVER_HOST_NAME> -crypto DES-CBC-MD5 -kvno ???? -out database.keytab
+
+
+If the kvno you listed with oklist doesn't match what the kvno returned then the keytab needs to be recreated
+
+Task 11: Verify time synchronization between the Domain Controller and SSO host. System clocks hould be within 5 minutes of each other.
+
+Task 12. Create externally identified database users. Note that the username must match the Active Directory users' userPrincipalName attribute:
+
+SQL> CREATE USER asmith IDENTIFIED EXTERNALLY as 'asmith@LOWENTHAL.VM';
+
+or alter an existing user (this can only be cone on 11g)
+SQL> ALTER user asmith IDENTIFIED EXTERNALLY as 'asmith@LOWENTHAL.VM';
+
+
+SQL> GRANT connect, resource TO asmith";
+
+Task 13: Ensure that database initialization parameters remote_os_authent is set to false and os_authent_prefix are null.
+
+Task 14: For EACH client computer:
+a. Ensure there is a directory %homedrive%\tmp. Also create \tmp on the same drive as %ORACLE_HOME%
+b. Ensure that %SYSTEMROOT%\system32\drivers\etc\services has kerberos5 in both port 88 lines
+c. If the client is pre-9.2.0.5, copy the orank59.dll to %ORACLE_HOME%\bin (you should rename the existing .dll first in case you need to regress). If the client is an 8i client you will need to install patch 3679609.
+d. Create the krb5.ini file in the new directory (note: this file is case sensitive):
+
+[libdefaults]
+    default_realm = <ACTIVE DIRECTORY DEFAULT DOMAIN>
+[realms]
+    <ACTIVE DIRECTORY DEFAULT DOMAIN> = {
+        kdc = <ACTIVE DIRECTORY SERVER HOST NAME>.<ACTIVE DIRECTORY DEFAULT DOMAIN>:88
+    }
+[domain_realm]
+    <ACTIVE DIRECTORY DEFAULT DOMAIN> = <ACTIVE DIRECTORY DEFAULT DOMAIN>
+    .<ACTIVE DIRECTORY DEFAULT DOMAIN> = <ACTIVE DIRECTORY DEFAULT DOMAIN>
+    
+e. Create or edit the SQLNET.ORA file in %ORACLE_HOME%/network/admin. It should have the following entries (%ORACLE_HOME% for this server was d:\oracle\ora92):
+
+SQLNET.AUTHENTICATION_KERBEROS5_SERVICE=ORACLE
+SQLNET.KERBEROS5_CONF=<CLIENT ORACLE_HOME>\network\krb5\krb5.conf
+SQLNET.AUTHENTICATION_SERVICES=(kerberos5pre,kerberos5)
+SQLNET.KERBEROS5_CC_NAME=OSMSFT://
+SQLNET.KERBEROS5_CC_NAME=MSLSA:   (12c and up)
+SQLNET.KERBEROS5_CLOCKSKEW=6000
+SQLNET.KERBEROS5_CONF_MIT=TRUE
+#TRACE_LEVEL_CLIENT = 15
+TRACE_UNIQUE_CLIENT = on
+TRACE_DIRECTORY_CLIENT = <client ORACLE_HOME>\network\log
+TRACE_FILE_CLIENT = client
+TRACE_LEVEL_OKINIT = 15
+TRACE_UNIQUE_OKINIT = on
+TRACE_TIMESTAMP_CLIENT=ON
+TRACE_DIRECTORY_OKINIT = <client ORACLE_HOME>\network\log
+TRACE_FILE_OKINIT = okinit
+DIAG_ADR_ENABLED = off
+
+f. test the krb5.ini and sqlnet.ora entries using the oklist command
+
+Task 15: Verfy that a user who has authenticated to the Active Directory KDC can log into the database without having to present a username/password.
+
+
+
+----------------------------------------------------
+Relinking the Database server if Kerberos Adapter is not present:
+Shutdown all databases/listeners using this $ORACLE_HOME
+
+cd $ORACLE_HOME/network/lib
+make -f ins_nau.mk ikerberos
+make -f ins_nau.mk okdstry
+make -f ins_nau.mk oklist
+make -f ins_nau.mk okinit
+cd $ORACLE_HOME/bin
+relink all
+
+--------------------
+Active Directory userAccountControl flags
+SCRIPT				1
+ACCOUNTDISABLE			2
+HOMEDIR_REQUIRED		8
+LOCKOUT				16
+PASSWD_NOTREQD			32
+PASSWD_CANT_CHANGE		64
+ENCRYPTED_TEXT_PWD_ALLOWED	128
+TEMP_DUPLICATE_ACCOUNT		256
+NORMAL_ACCOUNT			512
+INTERDOMAIN_TRUST_ACCOUNT	2048
+WORKSTATION_TRUST_ACCOUNT	4096
+SERVER_TRUST_ACCOUNT		8192
+DONT_EXPIRE_PASSWORD		65536
+MNS_LOGON_ACCOUNT		131072
+SMARTCARD_REQUIRED		262144
+TRUSTED_FOR_DELEGATION		524288
+NOT_DELEGATED			1048576
+USE_DES_KEY_ONLY		2097152
+DONT_REQ_PREAUTH		4194304
+PASSWORD_EXPIRED		8388608
+TRUSTED_TO_AUTH_FOR_DELEGATION	16777216
+
+===================================
+-----Kerberos Encryption---------
+10G only accepts etype 1 and 3
+Microsoft AD2003 accepts 3,23
+Microsoft AD2008 accepts 3,23,17,18
+Microsoft AD2008R2 accepts 17,18,23
+
+Microsoft AD2003 will not allow a client to request a non-default encryption type (http://support.microsoft.com/kb/833708)
+Microsoft AD2008R2 will only allow types 17,18,23 by default which means a 10g database or 10g client will fail UNLESS you override that (Oracle MOS note 1225063.1)
+   Go to Computer Configuration\Policies\Windows Settings\Security Settings\Local Policies\Security Options
+   Add the DES ciphers to “Network security: Configure encryption types allowed for Kerberos”
+Microsoft AD2008 may not allow DES encryption for some users EVEN AFTER DES is enabled (http://support.microsoft.com/kb/978055) 
+Windows 7 also does not allow DES encryption so if you are using a 10g client against on Win 7 you will have to update the group policy to ensure the workstation accepts DES
+
+       etype           encryption type                 Reference
+         0       reserved                     [RFC6448]
+         1       des-cbc-crc                  [RFC3961]
+         2       des-cbc-md4                  [RFC3961]
+         3       des-cbc-md5                  [RFC3961]
+         4       Reserved                     [RFC3961]
+         5       des3-cbc-md5
+         6       Reserved                     [RFC3961]
+         7       des3-cbc-sha1
+         8       Unassigned
+         9       dsaWithSHA1-CmsOID           [RFC4556]
+        10       md5WithRSAEncryption-CmsOID  [RFC4556]
+        11       sha1WithRSAEncryption-CmsOID [RFC4556]
+        12       rc2CBC-EnvOID                [RFC4556]
+        13       rsaEncryption-EnvOID         [RFC4556][from PKCS#1 v1.5]]
+        14       rsaES-OAEP-ENV-OID           [RFC4556][from PKCS#1 v2.0]]
+        15       des-ede3-cbc-Env-OID         [RFC4556]
+        16       des3-cbc-sha1-kd             [RFC3961]
+        17       aes128-cts-hmac-sha1-96      [RFC3962]
+        18       aes256-cts-hmac-sha1-96      [RFC3962]
+       19-22     Unassigned
+        23       rc4-hmac                     [RFC4757]
+        24       rc4-hmac-exp                 [RFC4757]
+       25-64     Unassigned
+        65       subkey-keymaterial           [(opaque; PacketCable)]
+
+======  If you find your kerberos configuration causes ORA-609 in the alert log whenever anyone tries to connect through the listener while using kerberos as an authentication service.  
+1) Comment out sqnet.authentication_servcies in server sqlnet.ora and connect (to validate Kerberos is the issue).  
+2) test with:
+kinit ORACLE/iamlinux.oracle.vm
+kvno ORACLE/iamlinux.oracle.vm
+
+Note: If you can't update krb5.conf in /etc then you can set the KRB5_CONFIG environment variable to point to your krb5.conf like this:
+export KRB5_CONFIG=$ORACLE_HOME/network/admin/krb5.conf
+
+this will print the KVNO that the kerberos server is looking for. If you recreate the keytab create it with -kvno of one more than this value
