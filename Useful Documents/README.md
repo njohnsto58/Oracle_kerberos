@@ -6,6 +6,8 @@ and use (and edit) the supplied PowerShell scripts written by John Parker
 The up to date PDF is found here
 https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/creating-active-directory-domain-services-in-oci.pdf
 
+The file DB Authentication.pdf is my understanding of Oracle database authentication methods - I may be wrong!
+
 Here are some links that I find useful - they reference some YouTube videos created by Russ Lowenthal
 https://joordsblog.vandenoord.eu/2022/10/managing-oracle-database-19c-users-in.html
 https://joordsblog.vandenoord.eu/2022/10/managing-oracle-database-19c-users-in_01196201481.html
