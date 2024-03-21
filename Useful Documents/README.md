@@ -10,5 +10,5 @@ Here are some links that I find useful - they reference some YouTube videos crea
 https://joordsblog.vandenoord.eu/2022/10/managing-oracle-database-19c-users-in.html
 https://joordsblog.vandenoord.eu/2022/10/managing-oracle-database-19c-users-in_01196201481.html
 
-And Lastly - my colleague Frand Van Der Borden has created a few YouTube vides (it's worth subscribing to his channel) - here's one on CMU
+And Lastly - my colleague Frand Van Der Borden has created a few YouTube videos (it's worth subscribing to his channel) - here's one on CMU
 https://www.youtube.com/watch?v=12Ht7n8c_14&t=7s
