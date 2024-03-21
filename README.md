@@ -38,18 +38,18 @@ The DB_DOMAIN_REALMS parameter will take multiple domains separated by spaces
 3. If you want to transfer the files seamlessly to the UNIX box, then create a public and private key. I've created one for ease, but you should create your own.
 4. Run the scripts in numerical order...
 
-### 01-DBServiceAccount <<DB Host Environment File>>
+### 01-DBServiceAccount \<DB Host Environment File\>
 Must be run as an administrator - there's a little check at the beginning of the script.
 This will create a service account for the oracle database that you'll be authenticating to in AD. I'm not sure that the account name will need to be as long as the name generated - but this works for now
 
 ### 02-ktp \<DB Host Environment File\>
 This will generate the key tab file - again, must be run as an administrator
-The generated file will be placed in a directory **<DB Host Environment File>-Host**
+The generated file will be placed in a directory **\<DB Host Environment File\>-Host**
 
-### 03-remote-envUNIX-DB <<DB Host Environment File>>
+### 03-remote-envUNIX-DB \<DB Host Environment File\>
 This should generate an environment file that gets called on the UNIX box. In our example, the file will be called 00_env_dbaas1.sh
 The script can be called as many times as you want. For example, if you've made changes to the to the environment file (e.g. DBAAS1.bat) and want to regenerate the remote env file.
-The generated script will be placed in the directory **<DB Host Environment File>-Host**
+The generated script will be placed in the directory **\<DB Host Environment File\>-Host**
 
 ### 04-remote-envWin 
 This should generate an environment file that gets called on the Windows client. The client should only need a few files modified - sqlnet.ora for example
@@ -62,18 +62,18 @@ The generated file is placed in the direcrtory WinClient
 Generate the sqlnet.ora file for a UNIX client - note, the lines should be added to an existing sqlnet.ora file (replacing the appropriate lines)
 The generated file is placed in the direcrtory UNIXClient
 
-### 05-sqlnet-DB-Host <<DB Host Environment File>>
+### 05-sqlnet-DB-Host \<DB Host Environment File\>
 Generate the sqlnet.ora file for the UNIX database host - note, the lines should be added to an existing sqlnet.ora file (replacing the appropriate lines)
-The generated file is placed in the direcrtory **<<DB Host Environment File>>-Host**
+The generated file is placed in the direcrtory **\<DB Host Environment File\>-Host**
 
-### 08-export-cert <<DB Host Environment File>>
+### 08-export-cert \<DB Host Environment File\>
 Required for CMU. Assumes that the person running this has permissions to generate the cert
 The certificate only needs to be generated once - it can be transferred to as many environments as required
 The only reason the UNIX environment file is used is in the transfer
 There is the option to transfer the certificate to the UNIX box (07-transfer-cert.bat) - same comment about certificates
 
-### 10-transfer-UNIXDBHost <<DB Host Environment File>>
-Transfer all the files in the directory **<<DB Host Environment File>>-Host** to the database host
+### 10-transfer-UNIXDBHost \<DB Host Environment File\>
+Transfer all the files in the directory **\<DB Host Environment File\>-Host** to the database host
 
 ## UNIX Server
 There are a separate set of scripts to run in the UNIX environment. 
