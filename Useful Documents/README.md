@@ -6,7 +6,9 @@ and use (and edit) the supplied PoserShell scripts written by John Parker
 The up to date PDF is found here
 https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/whitepapers/creating-active-directory-domain-services-in-oci.pdf
 
-Lastly, here are some links that I find useful
+Here are some links that I find useful - they reference some YouTube videos created by Russ Lowenthal
 https://joordsblog.vandenoord.eu/2022/10/managing-oracle-database-19c-users-in.html
 https://joordsblog.vandenoord.eu/2022/10/managing-oracle-database-19c-users-in_01196201481.html
+
+And Lastly - my colleague Frand Van Der Borden has created a few YouTube vides (it's worth subscribing to his channel) - here's one on CMU
 https://www.youtube.com/watch?v=12Ht7n8c_14&t=7s
