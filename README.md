@@ -42,7 +42,7 @@ The DB_DOMAIN_REALMS parameter will take multiple domains separated by spaces
 Must be run as an administrator - there's a little check at the beginning of the script.
 This will create a service account for the oracle database that you'll be authenticating to in AD. I'm not sure that the account name will need to be as long as the name generated - but this works for now
 
-### 02-ktp <DB Host Environment File>
+### 02-ktp \<DB Host Environment File\>
 This will generate the key tab file - again, must be run as an administrator
 The generated file will be placed in a directory **<DB Host Environment File>-Host**
 
