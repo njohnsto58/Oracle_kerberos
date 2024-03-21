@@ -1,5 +1,5 @@
 # Useful Files
-Kerberos_19c_ad2016.txt and Kerberos_Troubleshooting.txt were written by my colleagues Russ Lowenthal and Rich Evans, they're usefull background reading as to why some of the parameters nees setting
+Kerberos_19c_ad2016.txt and Kerberos_Troubleshooting.txt were written by my colleagues Russ Lowenthal and Rich Evans, they're usefull background reading as to why some of the parameters need setting
 
 The file creating-active-directory-domain-services-in-oci.pdf are instructions on how to create an AD Domain and windows clients on OCI. Follow the instructions carefully, 
 and use (and edit) the supplied PoserShell scripts written by John Parker
