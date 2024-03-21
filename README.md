@@ -42,14 +42,14 @@ The DB_DOMAIN_REALMS parameter will take multiple domains separated by spaces
 Must be run as an administrator - there's a little check at the beginning of the script.
 This will create a service account for the oracle database that you'll be authenticating to in AD. I'm not sure that the account name will need to be as long as the name generated - but this works for now
 
-### 02-ktp <<DB Host Environment File>>
+### 02-ktp <DB Host Environment File>
 This will generate the key tab file - again, must be run as an administrator
-The generated file will be placed in a directory **<<DB Host Environment File>>-Host**
+The generated file will be placed in a directory **<DB Host Environment File>-Host**
 
 ### 03-remote-envUNIX-DB <<DB Host Environment File>>
 This should generate an environment file that gets called on the UNIX box. In our example, the file will be called 00_env_dbaas1.sh
 The script can be called as many times as you want. For example, if you've made changes to the to the environment file (e.g. DBAAS1.bat) and want to regenerate the remote env file.
-The generated script will be placed in the directory **<<DB Host Environment File>>-Host**
+The generated script will be placed in the directory **<DB Host Environment File>-Host**
 
 ### 04-remote-envWin 
 This should generate an environment file that gets called on the Windows client. The client should only need a few files modified - sqlnet.ora for example
