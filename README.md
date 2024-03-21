@@ -51,22 +51,29 @@ This should generate an environment file that gets called on the UNIX box. In ou
 The script can be called as many times as you want. For example, if you've made changes to the to the environment file (e.g. DBAAS1.bat) and want to regenerate the remote env file.
 The generated script will be placed in the directory **<<DB Host Environment File>>-Host**
 
-### 04-remote-envWin dbaas1
-This should generate an environment file that gets called on the UNIX box. In our example, the file will be called 00_env_dbaas1.sh
-The script can be called as many times as you want. For example, if you've made changes to the to the environment file (e.g. DBAAS1.bat) and want to regenerate the remote env file.
-There is the option to transfer the file to the UNIX box (05-transfer-env.bat) - same comment about certificates
+### 04-remote-envWin 
+This should generate an environment file that gets called on the Windows client. The client should only need a few files modified - sqlnet.ora for example
 
-### 05-transfer-env dbaas1
-Ditto for 03-transfer-keytab - if there was a mistake, this can be run again
+### 05a-sqlnet-WinClient
+Generate the sqlnet.ora file for the Windows Client - note, the lines should be added to an existing sqlnet.ora file (replacing the appropriate lines)
+The generated file is placed in the direcrtory WinClient
 
-### 06-export-cert dbaas1
+### 05b-sqlnet-UNIXClient 
+Generate the sqlnet.ora file for a UNIX client - note, the lines should be added to an existing sqlnet.ora file (replacing the appropriate lines)
+The generated file is placed in the direcrtory UNIXClient
+
+### 05-sqlnet-DB-Host <<DB Host Environment File>>
+Generate the sqlnet.ora file for the UNIX database host - note, the lines should be added to an existing sqlnet.ora file (replacing the appropriate lines)
+The generated file is placed in the direcrtory **<<DB Host Environment File>>-Host**
+
+### 08-export-cert <<DB Host Environment File>>
 Required for CMU. Assumes that the person running this has permissions to generate the cert
 The certificate only needs to be generated once - it can be transferred to as many environments as required
 The only reason the UNIX environment file is used is in the transfer
 There is the option to transfer the certificate to the UNIX box (07-transfer-cert.bat) - same comment about certificates
 
-### 07-transfer-cert dbaas1
-Transfer the certificate to the UNIX enviromment. The certificate can be transferred to as many environments as required
+### 10-transfer-UNIXDBHost <<DB Host Environment File>>
+Transfer all the files in the directory **<<DB Host Environment File>>-Host** to the database host
 
 ## UNIX Server
 There are a separate set of scripts to run in the UNIX environment. 
